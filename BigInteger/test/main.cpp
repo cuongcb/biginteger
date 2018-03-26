@@ -22,16 +22,19 @@ int main()
 
 	print(g->toString());
 
-	BigInteger lhs("999999");
-	BigInteger rhs("1");
+	BigInteger lhs("210");
+	BigInteger rhs("-109");
 
 	BigInteger res = lhs + rhs;
+	BigInteger minres = lhs - rhs;
 
 	print(lhs.toString());
 	print(rhs.toString());
 	print(res.toString());
+	print(minres.toString());
 
-	std::cin.get();
+	system("pause");
+	//std::cin.get();
 
 	return 0;
 }

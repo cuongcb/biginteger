@@ -14,6 +14,7 @@ public:
 	BigInteger();
 	BigInteger(std::string val);
 	BigInteger(std::string val, int sign);
+	BigInteger(std::vector<int> val, int sign);
 	BigInteger(const BigInteger & val);
 	BigInteger(int val);
 	~BigInteger();
@@ -27,6 +28,8 @@ public:
 	BigInteger operator*(const BigInteger &rhs);
 	// /
 	BigInteger operator/(const BigInteger &rhs);
+	// Not
+	BigInteger& Not();
 
 private:
 	void strimLeftSpace(std::string &s);

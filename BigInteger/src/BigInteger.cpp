@@ -15,6 +15,11 @@ BigInteger::BigInteger(std::string val, int sign): mSign(sign)
 	Set(val);
 }
 
+BigInteger::BigInteger(std::vector<int> val, int sign) : mDigits(val), mSign(sign)
+{
+
+}
+
 BigInteger::BigInteger(const BigInteger & val)
 {
 	this->mDigits = val.mDigits;
@@ -50,19 +55,33 @@ BigInteger BigInteger::operator+(const BigInteger &rhs)
 		return *this;
 	}
 	
+	BigInteger result;
+
 	if (mSign == rhs.mSign) // normal add
 	{
-		BigInteger result;
 		result.mSign = mSign;
 		result.mDigits = Add(mDigits, rhs.mDigits);
 
 		return result;
 	}
+
+	if (Less(mDigits, rhs.mDigits))
+	{
+		result.mSign = rhs.mSign;
+	}
 	else
 	{
-		if (lessAbs(*this, rhs)) Sub(*this, rhs);
-		else Sub(rhs, *this);
+		result.mSign = mSign;
 	}
+
+	result.mDigits = Sub(mDigits, rhs.mDigits);
+
+	return result;
+}
+
+BigInteger BigInteger::operator-(const BigInteger &rhs)
+{
+	return (*this + BigInteger(rhs.mDigits, -rhs.mSign));
 }
 
 void BigInteger::strimLeftSpace(std::string &s)
@@ -159,7 +178,7 @@ bool BigInteger::lessAbs(const BigInteger &a, const BigInteger &b)
 	else if (a.mDigits.size() > b.mDigits.size())
 		return false;
 
-	for (auto i = 0; i < a.mDigits.size(); i++)
+	for (unsigned int i = 0; i < a.mDigits.size(); i++)
 	{
 		if (a.mDigits[i] < b.mDigits[i])
 			return true;
@@ -168,17 +187,19 @@ bool BigInteger::lessAbs(const BigInteger &a, const BigInteger &b)
 	return false;
 }
 
-bool BigInteger::Less(vector<int> a, vector<int> b)
+bool BigInteger::Less(std::vector<int> a, std::vector<int> b)
 {
 	if (a.size() < b.size())
 		return true;
 	else if (a.size() > b.size())
 		return false;
 
-	for (auto i = 0; i < a.size(); i++)
+	for (unsigned int i = 0; i < a.size(); i++)
 	{
 		if (a[i] < b[i])
 			return true;
+		else if (a[i] > b[i])
+			return false;
 	}
 
 	return false;
@@ -222,9 +243,9 @@ std::vector<int> BigInteger::Add(std::vector<int> a, std::vector<int> b)
 
 std::vector<int> BigInteger::Sub(std::vector<int> a, std::vector<int> b)
 {
-	std::vector<int> result;
-
 	if (Less(a, b)) return Sub(b, a);
+
+	std::vector<int> result;
 
 	int sub = 0;
 	int carry = 0;
@@ -233,11 +254,8 @@ std::vector<int> BigInteger::Sub(std::vector<int> a, std::vector<int> b)
 
 	for (; i >= 0 && j >= 0; i--, j--)
 	{
-		if (a[i] >= carry)
-		{
-			a[i] -= carry;
-		}
-		
+		b[j] += carry;
+
 		if (a[i] < b[j])
 		{
 			a[i] += 10;
@@ -253,12 +271,25 @@ std::vector<int> BigInteger::Sub(std::vector<int> a, std::vector<int> b)
 		result.insert(result.begin(), sub);
 	}
 
-	while (i >= 0)
+	while (i > 0)
 	{
 		if (a[i] < carry)
 		{
-			a[i] += 10;
-			carry = 1;
+			a[i] = 9;
 		}
+		else
+		{
+			a[i] -= carry;
+			carry = 0;
+		}
+
+		result.insert(result.begin(), a[i--]);
 	}
+
+	if (i == 0 && a[i] > carry)
+	{
+		result.insert(result.begin(), a[i] - carry);
+	}
+
+	return result;
 }
