@@ -7,12 +7,12 @@ BigInteger::BigInteger()
 
 BigInteger::BigInteger(std::string val)
 {
-	Set(val);
+	set(val);
 }
 
 BigInteger::BigInteger(std::string val, int sign): mSign(sign)
 {
-	Set(val);
+	set(val);
 }
 
 BigInteger::BigInteger(std::vector<int> val, int sign) : mDigits(val), mSign(sign)
@@ -60,12 +60,12 @@ BigInteger BigInteger::operator+(const BigInteger &rhs)
 	if (mSign == rhs.mSign) // normal add
 	{
 		result.mSign = mSign;
-		result.mDigits = Add(mDigits, rhs.mDigits);
+		result.mDigits = add(mDigits, rhs.mDigits);
 
 		return result;
 	}
 
-	if (Less(mDigits, rhs.mDigits))
+	if (less(mDigits, rhs.mDigits))
 	{
 		result.mSign = rhs.mSign;
 	}
@@ -74,7 +74,7 @@ BigInteger BigInteger::operator+(const BigInteger &rhs)
 		result.mSign = mSign;
 	}
 
-	result.mDigits = Sub(mDigits, rhs.mDigits);
+	result.mDigits = sub(mDigits, rhs.mDigits);
 
 	return result;
 }
@@ -82,6 +82,38 @@ BigInteger BigInteger::operator+(const BigInteger &rhs)
 BigInteger BigInteger::operator-(const BigInteger &rhs)
 {
 	return (*this + BigInteger(rhs.mDigits, -rhs.mSign));
+}
+
+BigInteger BigInteger::operator*(const BigInteger &rhs)
+{
+	if (mSign == 0 || rhs.mSign == 0)
+		return BigInteger();
+
+	std::vector<int> product = mul(mDigits, rhs.mDigits);
+
+	return BigInteger(product, mSign * rhs.mSign);
+}
+
+BigInteger BigInteger::operator/(const BigInteger &rhs)
+{
+	if (rhs.mSign == 0)
+	{
+		throw std::domain_error("divided by zero");
+	}
+	else if (mSign == 0)
+	{
+		return BigInteger("0", 0);
+	}
+	else // both non-zero
+	{
+		std::vector<int> quotient = div(mDigits, rhs.mDigits);
+		if (equal(quotient, std::vector<int>(1, 0)))
+		{
+			return BigInteger("0", 0);
+		}
+		
+		return BigInteger(quotient, mSign * rhs.mSign);
+	}
 }
 
 void BigInteger::strimLeftSpace(std::string &s)
@@ -103,7 +135,7 @@ int BigInteger::toInt(int ch)
 	return (ch - '0');
 }
 
-void BigInteger::Set(std::string val)
+void BigInteger::set(std::string val)
 {
 	unsigned int cursor = 0;
 	mSign = 1;
@@ -178,7 +210,7 @@ bool BigInteger::lessAbs(const BigInteger &a, const BigInteger &b)
 	else if (a.mDigits.size() > b.mDigits.size())
 		return false;
 
-	for (unsigned int i = 0; i < a.mDigits.size(); i++)
+	for (std::vector<int>::size_type i = 0; i < a.mDigits.size(); i++)
 	{
 		if (a.mDigits[i] < b.mDigits[i])
 			return true;
@@ -187,14 +219,14 @@ bool BigInteger::lessAbs(const BigInteger &a, const BigInteger &b)
 	return false;
 }
 
-bool BigInteger::Less(std::vector<int> a, std::vector<int> b)
+bool BigInteger::less(const std::vector<int> &a, const std::vector<int> &b)
 {
 	if (a.size() < b.size())
 		return true;
 	else if (a.size() > b.size())
 		return false;
 
-	for (unsigned int i = 0; i < a.size(); i++)
+	for (std::vector<int>::size_type i = 0; i < a.size(); i++)
 	{
 		if (a[i] < b[i])
 			return true;
@@ -205,7 +237,21 @@ bool BigInteger::Less(std::vector<int> a, std::vector<int> b)
 	return false;
 }
 
-std::vector<int> BigInteger::Add(std::vector<int> a, std::vector<int> b)
+bool BigInteger::equal(const std::vector<int> &a, const std::vector<int> &b)
+{
+	if (a.size() != b.size())
+		return false;
+
+	for (std::vector<int>::size_type i = 0; i < a.size(); i++)
+	{
+		if (a[i] != b[i])
+			return false;
+	}
+
+	return true;
+}
+
+std::vector<int> BigInteger::add(const std::vector<int> &a, const std::vector<int> &b)
 {
 	std::vector<int> result;
 	int carry = 0;
@@ -241,9 +287,10 @@ std::vector<int> BigInteger::Add(std::vector<int> a, std::vector<int> b)
 	return result;
 }
 
-std::vector<int> BigInteger::Sub(std::vector<int> a, std::vector<int> b)
+std::vector<int> BigInteger::sub(const std::vector<int> &a, const std::vector<int> &b)
 {
-	if (Less(a, b)) return Sub(b, a);
+	if (equal(a, b)) return std::vector<int>(1, 0);
+	if (less(a, b)) return sub(b, a);
 
 	std::vector<int> result;
 
@@ -254,11 +301,27 @@ std::vector<int> BigInteger::Sub(std::vector<int> a, std::vector<int> b)
 
 	for (; i >= 0 && j >= 0; i--, j--)
 	{
-		b[j] += carry;
+		sub = a[i] - b[j] - carry;
 
-		if (a[i] < b[j])
+		if (sub < 0)
 		{
-			a[i] += 10;
+			sub += 10;
+			carry = 1;
+		}
+		else
+		{
+			carry = 0;
+		}
+		
+		result.insert(result.begin(), sub);
+	}
+
+	for (; i > 0; i--)
+	{
+		sub = a[i] - carry;
+		if (sub < 0)
+		{
+			sub += 10;
 			carry = 1;
 		}
 		else
@@ -266,24 +329,7 @@ std::vector<int> BigInteger::Sub(std::vector<int> a, std::vector<int> b)
 			carry = 0;
 		}
 
-		sub = a[i] - b[j];
-		
 		result.insert(result.begin(), sub);
-	}
-
-	while (i > 0)
-	{
-		if (a[i] < carry)
-		{
-			a[i] = 9;
-		}
-		else
-		{
-			a[i] -= carry;
-			carry = 0;
-		}
-
-		result.insert(result.begin(), a[i--]);
 	}
 
 	if (i == 0 && a[i] > carry)
@@ -292,4 +338,82 @@ std::vector<int> BigInteger::Sub(std::vector<int> a, std::vector<int> b)
 	}
 
 	return result;
+}
+
+std::vector<int> BigInteger::mul(const std::vector<int> &a, const std::vector<int> &b)
+{
+	typedef std::vector<int>::size_type vec_sz;
+	vec_sz a_size = a.size();
+	vec_sz b_size = b.size();
+
+	std::vector<int> product = std::vector<int>(a_size + b_size, 0);
+
+	for (int b_i = b_size - 1; b_i >= 0; --b_i)
+	{
+		int carry = 0;
+		for (int a_i = a_size - 1; a_i >= 0; --a_i)
+		{
+			product[a_i + b_i + 1] += carry + a[a_i] * b[b_i];
+			carry = product[a_i + b_i + 1] / 10;
+			product[a_i + b_i + 1] %= 10;
+		}
+		product[b_i] += carry;
+	}
+
+	for (std::vector<int>::const_iterator iter = product.begin(); iter != product.end();)
+	{
+		if (*iter == 0)
+		{
+			iter = product.erase(iter);
+		}
+		else
+		{
+			break;
+		}
+	}
+
+	return product;
+}
+
+std::vector<int> BigInteger::div(const std::vector<int> &a, const std::vector<int> &b)
+{
+	if (equal(a, b)) return std::vector<int>(1, 1);
+	else if (less(a, b)) return std::vector<int>(1, 0);
+
+	std::vector<int> quotient;
+
+	typedef std::vector<int>::size_type vec_sz;
+	vec_sz asize = a.size();
+	vec_sz bsize = b.size();
+	vec_sz i = 0, j = bsize;
+
+	while (i != asize)
+	{
+		std::vector<int> dividend = std::vector<int>(a.begin() + i, a.begin() + j); // [begin + i, begin + j)
+		int divisor = 1;
+		while (less(mul(b, std::vector<int>(1, divisor)), dividend)
+			   || equal(mul(b, std::vector<int>(1, divisor)), dividend))
+		{
+			divisor++;
+		}
+		quotient.push_back(divisor-1);
+
+		i = j;
+		j += bsize;
+		j = (j < asize) ? j : asize;
+	}
+
+	for (std::vector<int>::const_iterator iter = quotient.begin(); iter != quotient.end();)
+	{
+		if (*iter == 0)
+		{
+			iter = quotient.erase(iter);
+		}
+		else
+		{
+			break;
+		}
+	}
+
+	return quotient;
 }

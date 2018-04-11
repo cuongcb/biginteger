@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 #include <algorithm>
+#include <stdexcept>
 
 class BigInteger {
 private:
@@ -35,9 +36,12 @@ private:
 	void strimLeftSpace(std::string &s);
 	void strimRightSpace(std::string &s);
 	int toInt(int ch);
-	void Set(std::string val);
+	void set(std::string val);
 	bool lessAbs(const BigInteger &a, const BigInteger &b);
-	bool Less(std::vector<int> a, std::vector<int> b);
-	std::vector<int> Add(std::vector<int> a, std::vector<int> b);
-	std::vector<int> Sub(std::vector<int> a, std::vector<int> b);
+	bool less(const std::vector<int> &a, const std::vector<int> &b);
+	bool equal(const std::vector<int> &a, const std::vector<int> &b);
+	std::vector<int> add(const std::vector<int> &a, const std::vector<int> &b);
+	std::vector<int> sub(const std::vector<int> &a, const std::vector<int> &b);
+	std::vector<int> mul(const std::vector<int> &a, const std::vector<int> &b);
+	std::vector<int> div(const std::vector<int> &a, const std::vector<int> &b);
 };

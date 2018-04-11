@@ -22,16 +22,20 @@ int main()
 
 	print(g->toString());
 
-	BigInteger lhs("210");
-	BigInteger rhs("-109");
+	BigInteger lhs("21");
+	BigInteger rhs("1");
 
 	BigInteger res = lhs + rhs;
 	BigInteger minres = lhs - rhs;
+	BigInteger product = lhs * rhs;
+	BigInteger quotient = lhs / rhs;
 
 	print(lhs.toString());
 	print(rhs.toString());
 	print(res.toString());
 	print(minres.toString());
+	print(product.toString());
+	print(quotient.toString());
 
 	system("pause");
 	//std::cin.get();
